@@ -1,67 +1,101 @@
 'use strict';
 
 angular.module('bahmni.reports')
-    .controller('ReportsController', ['$scope', '$filter', 'appService', 'reportService', 'FileUploader', 'messagingService', 'spinner', '$rootScope', '$translate', 'auditLogService', function ($scope, $filter, appService, reportService, FileUploader, messagingService, spinner, $rootScope, $translate, auditLogService) {
+.controller('ReportsController', ['$scope', '$filter', 'appService', 'reportService', 'FileUploader', 'messagingService', 'spinner', '$rootScope', '$translate', 'auditLogService', function ($scope, $filter, appService, reportService, FileUploader, messagingService, spinner, $rootScope, $translate, auditLogService) {
         const format = _.values(reportService.getAvailableFormats());
         const dateRange = _.values(reportService.getAvailableDateRange());
 
         var getTranslatedMessage = function (key) {
             return $translate.instant(key);
         };
-
+        
         $scope.uploader = new FileUploader({
             url: Bahmni.Common.Constants.uploadReportTemplateUrl,
             removeAfterUpload: true,
             autoUpload: true
         });
+
+        $scope.searchToken = "";
+
         $scope.uploader.onSuccessItem = function (fileItem, response) {
             fileItem.report.reportTemplateLocation = response;
         };
 
         $rootScope.default = $rootScope.default || {
+
             reportsRequiringDateRange: {
+
                 responseType: format[1],
+
                 dateRangeType: dateRange[0],
+
                 startDate: dateRange[0],
+
                 stopDate: dateRange[0],
+
                 report: { responseType: format[1] }
+
             },
+
             reportsNotRequiringDateRange: {}
+
         };
+
 
         $scope.reportsDefined = true;
         $scope.enableReportQueue = appService.getAppDescriptor().getConfigValue("enableReportQueue");
 
         $scope.setDefault = function (item, header) {
             var setToChange = (header === 'reportsRequiringDateRange') ? $rootScope.reportsRequiringDateRange : $rootScope.reportsNotRequiringDateRange;
+
             var isPreviousMonth = $rootScope.default[header][item] === dateRange[2];
+
             for (var i = 0; i < setToChange.length; i++) {
+
                 var report = setToChange[i];
+
                 if (item === 'dateRangeType') {
+
                     $rootScope.default.reportsRequiringDateRange.startDate = $rootScope.default[header][item];
+
                     $rootScope.default.reportsRequiringDateRange.stopDate = isPreviousMonth ? getPreviousMonthEndDate() : dateRange[0];
+
                     report.startDate = $rootScope.default[header][item];
+
                     report.stopDate = isPreviousMonth ? getPreviousMonthEndDate() : dateRange[0];
+
                 } else if (_.isUndefined($rootScope.default[header][item])) {
+
                     $rootScope.default.reportsRequiringDateRange.startDate = dateRange[0];
+
                     $rootScope.reportsRequiringDateRange.forEach(function (report) {
+
                         report.startDate = $filter('date')(dateRange[0], 'yyyy-MM-dd');
+
                         report.stopDate = isPreviousMonth ? getPreviousMonthEndDate() : dateRange[0];
+
                         report.responseType = format[1];
+
                     });
+
                     break;
+
                 } else {
+
                     report[item] = $rootScope.default[header][item];
+
                 }
             }
         };
+
+
 
         var getPreviousMonthEndDate = function () {
             return new Date(new Date().getFullYear(), new Date().getMonth(), 0);
         };
 
         var isDateRangeRequiredFor = function (report) {
-            return _.find($rootScope.reportsRequiringDateRange, { name: report.name });
+            return _.find($rootScope.reportsRequiringDateRange, {name: report.name});
         };
 
         var validateReport = function (report) {
@@ -87,6 +121,7 @@ angular.module('bahmni.reports')
                     msg.push("end date");
                 }
                 if ((report.startDate > report.stopDate)) {
+
                     msg.push(getTranslatedMessage("START_DATE_CANNOT_LATER_THAN_STOP_DATE"));
                 }
                 messagingService.showMessage("error", "Please select the " + msg.join(" and "));
@@ -111,7 +146,7 @@ angular.module('bahmni.reports')
         };
 
         var log = function (reportName) {
-            auditLogService.log(undefined, 'RUN_REPORT', { reportName: reportName }, "MODULE_LABEL_REPORTS_KEY");
+            auditLogService.log(undefined, 'RUN_REPORT', {reportName: reportName}, "MODULE_LABEL_REPORTS_KEY");
         };
 
         $scope.scheduleReport = function (report) {
@@ -129,6 +164,19 @@ angular.module('bahmni.reports')
             }
         };
 
+        $scope.searchReport = function (searchToken) {
+            $scope.searchToken = searchToken;
+                _.forEach($rootScope.reportsRequiringDateRange, function (report) {
+                    var hiddenReports = 0;
+                    if (report.name.match(new RegExp($scope.searchToken, "i")) === null) {
+                        report.hidden = true;
+                        hiddenReports++;
+                    } else {
+                        report.hidden = false;
+                    }                   
+                });                         
+        };
+        
         var initializeFormats = function () {
             var supportedFormats = appService.getAppDescriptor().getConfigValue("supportedFormats") || _.keys(reportService.getAvailableFormats());
             supportedFormats = _.map(supportedFormats, function (format) {
@@ -138,8 +186,11 @@ angular.module('bahmni.reports')
         };
 
         var initializeDateRange = function () {
+
             var supportedDateRange = appService.getAppDescriptor().getConfigValue("supportedDateRange") || _.keys(reportService.getAvailableDateRange());
+
             $scope.dateRange = _.pick(reportService.getAvailableDateRange(), supportedDateRange);
+
         };
 
         var initialization = function () {
