@@ -173,6 +173,19 @@ angular.module('consultation')
                     }
                 }
             })
+            .state('patient.dashboard.show.sharedhealthrecord', {
+                url: '/shared-health-record/search',
+                params: {
+                    cachebuster: null,
+                    lastOpenedTemplate: null
+                },
+                views: {
+                    'consultation-content': {
+                        templateUrl: 'consultation/views/sharedRecord.html',
+                        controller: 'SharedRecordPageController'
+                    }
+                }
+            })
             .state('patient.dashboard.show.diagnosis', {
                 url: '/diagnosis',
                 params: {
