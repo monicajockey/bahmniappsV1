@@ -11,9 +11,20 @@ angular.module('bahmni.common.appFramework')
             var customUrl = Bahmni.Common.Constants.customUrl;
             var appDescriptor = null;
             $rootScope.meetId = null;
+
             var loadConfig = function (url) {
                 return loadConfigService.loadConfig(url, appDescriptor.contextPath);
             };
+            
+            this.getPatient = function (uuid) {
+                var patient = $http.get(Bahmni.Common.Constants.openmrsUrl + "/ws/rest/v1/patient/" + uuid, {
+                    method: "GET",
+                    params: {v: "full"},
+                    withCredentials: true
+                });
+                return patient;
+            };
+           
 
             var loadTemplate = function (appDescriptor) {
                 var deferrable = $q.defer();
@@ -136,7 +147,7 @@ angular.module('bahmni.common.appFramework')
                     }
                 }, function (error) {
                     if (error.status !== 404) {
-                        messagingService.showMessage('error', $translate.instance("INCORRECT_CONFIGURATION_MESSAGE", {error: error.message}));
+                        messagingService.showMessage('error', "Incorrect Configuration:  " + error.message);
                         deferrable.reject(error);
                     } else {
                         deferrable.resolve(appDescriptor);
@@ -232,4 +243,95 @@ angular.module('bahmni.common.appFramework')
                 });
                 return appLoader.promise;
             };
+
+            // **************Function to be used to set and get flags****************
+            let Regimen = '';
+            let isActiveSet = false; 
+            let isDeactivated = false;
+            let Followupdate = '';
+            let isOderhasBeenSaved = null;
+            let isOrderRegimenInserted = false;
+            this.setRegimen  = function (_regimen){
+                Regimen = _regimen;
+            }
+            this.getRegimen = function()
+            {
+                return Regimen;
+            }
+            this.setActive  = function (_isActiveSet){
+                isActiveSet = _isActiveSet;
+            }
+            this.getActive  = function()
+            {
+                return isActiveSet;
+            }
+            this.setDeactivated  = function (_isDeactivated){
+                isDeactivated = _isDeactivated;
+            }
+            this.getDeactivated = function()
+            {
+                return isDeactivated;
+            }
+            this.setFollowupdate  = function (_Followupdate){
+                Followupdate = _Followupdate ;
+            }
+            this.getFollowupdate  = function()
+            {
+                return Followupdate ;
+            }
+            this.setOrderstatus = function (_isOderhasBeenSaved){
+                isOderhasBeenSaved= _isOderhasBeenSaved;
+            }
+            this.getOrderstatus  = function()
+            {
+                return isOderhasBeenSaved ;
+            }
+            this.setIsOrderRegimenInserted = function (_isOrderRegimenInserted){
+                isOrderRegimenInserted= _isOrderRegimenInserted;
+            }
+            this.getIsOrderRegimenInserted  = function(){
+                return isOrderRegimenInserted;
+            }
+
+            //---------------------------Auto fill of observations flags
+            //**Setting a check field for autopopulations on forms */
+            let isFormSaved = false;
+            let savedFormName = '';
+            let isFieldAutoFilled = false;
+
+
+
+            this.setSavedFormCheck = function (_isFormSaved ){
+                isFormSaved = _isFormSaved;
+            }
+            this.getSavedFormCheck   = function()
+            {
+                return isFormSaved;
+            }
+            this.setFormName   = function (_savedFormName ){
+                savedFormName  = _savedFormName ;
+            }
+            this.getFormName   = function()
+            {
+                return savedFormName ;
+            }
+            
+            this.setIsFieldAutoFilled   = function (_isFieldAutoFilled ){
+                isFieldAutoFilled  = _isFieldAutoFilled ;
+            }
+            this.getIsFieldAutoFilled = function()
+            {
+                return isFieldAutoFilled ;
+            }
+            
+            //-------------------------------AHD Meds Flags------------------------------------
+            let _AHD_Regimen = '';
+            this.set_AHD_Regimen  = function (_ahd_regimen){
+                _AHD_Regimen = _ahd_regimen;
+            }
+            this.get_AHD_Regimen = function()
+            {
+                return _AHD_Regimen;
+            }
+            
         }]);
